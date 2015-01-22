@@ -58,6 +58,8 @@
 var app_id = "";
 var app_token = "";
 var repo_base = "";
+var activity_results_arr = [];
+var week_results_arr = [];
 
 function makeCharts() {
 
@@ -77,11 +79,13 @@ function makeCharts() {
         activity_res = client.execute_sql(con, 'select activity, sum(duration) from getfit.minutes GROUP BY activity order by sum desc');
 
     // minutes by week
-    week_res = client.execute_sql(con, "select week_number, minutes from (SELECT sum(duration) as minutes, TRUNC(DATE_PART('day', '2015-02-02'::timestamp - enddate)/7) as week_number from getfit.minutes group by week_number) as numberedWeeks;");
+    var firstDateStr = '2015-01-11';
+    var weekQuery = "select week, minutes from (SELECT sum(duration) as minutes, TRUNC(DATE_PART('day', enddate - ' " + firstDateStr + "'::timestamp)/7) as week from getfit.minutes group by week) as numberedWeeks;"
+    week_res = client.execute_sql(con, weekQuery);
 
 
 
-    var activity_results_arr = []
+    activity_results_arr = [];
     activity_results_arr.push(activity_res.field_names)
     $.each(activity_res.tuples, function(tuple_idx, tuple) {
         var cell_arr = []
@@ -93,7 +97,7 @@ function makeCharts() {
     });
 
 
-    var week_results_arr = []
+    week_results_arr = [];
     week_results_arr.push(week_res.field_names)
     $.each(week_res.tuples, function(tuple_idx, tuple) {
         var cell_arr = []
@@ -104,7 +108,6 @@ function makeCharts() {
         week_results_arr.push(cell_arr)
     });
 
-
     // fill week_results_arr with blank data, or it will show an error
     if (week_results_arr.length == 1) {
         week_results_arr = [
@@ -113,21 +116,37 @@ function makeCharts() {
         ];
     };
 
+    
+ 
 
-    activity_data = google.visualization.arrayToDataTable(activity_results_arr);
-    week_data = google.visualization.arrayToDataTable(week_results_arr);
+
+  // draw the column chart
 
 
+    var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+   var date = new Date(firstDateStr); 
+
+    for (var i = 1; i < week_results_arr.length; i++) {
+      var month = monthNames[date.getMonth()];
+      var day = date.getDate();
+
+      var newDateStr = month + " " + day;
+      week_results_arr[i][0] = newDateStr;
+      date.setDate(date.getDate()+7);
+    };
+
+    
+   
     var column_chart = new google.visualization.ColumnChart(document.getElementById('column-chart-div'));
-
+    var column_count = week_results_arr.length-1;
     var column_chart_options = {
         legend: {
             position: 'none'
         },
         hAxis: {
-            title: 'Week Number',
+            title: 'Week',
             gridlines: {
-                count: 10
+                count: column_count
             },
             format: 0,
 
@@ -137,11 +156,16 @@ function makeCharts() {
         }
     };
 
+    week_data = google.visualization.arrayToDataTable(week_results_arr);
     column_chart.draw(week_data, column_chart_options);
 
+
+    // draw the pie chart
+    activity_data = google.visualization.arrayToDataTable(activity_results_arr);
     var pie_chart = new google.visualization.PieChart(document.getElementById('pie-chart-div'));
     pie_chart.draw(activity_data, {});
 
+    // draw the table
     var table = new google.visualization.Table(document.getElementById('table-div'));
     table.draw(activity_data);
 
