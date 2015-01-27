@@ -141,7 +141,7 @@ function makeCharts() {
 function makeActivityColumChart(con) {
     // minutes by week
     var firstDateStr = '2015-01-11';
-    var weekQuery = "select week, minutes from (SELECT sum(duration) as minutes, TRUNC(DATE_PART('day', enddate - ' " + firstDateStr + "'::timestamp)/7) as week from getfit.minutes group by week) as numberedWeeks;"
+    var weekQuery = "select week, minutes from (SELECT sum(duration) as minutes, TRUNC(DATE_PART('day', enddate - ' " + firstDateStr + "'::timestamp)/7) as week from getfit.minutes where verified group by week) as numberedWeeks;"
     week_res = client.execute_sql(con, weekQuery);
 
 
@@ -245,7 +245,7 @@ function makeActivityColumChart(con) {
 }
 
 function makePieChart(con) {
-    activity_res = client.execute_sql(con, 'select activity, sum(duration) from getfit.minutes GROUP BY activity order by sum desc');
+    activity_res = client.execute_sql(con, 'select activity, sum(duration) from getfit.minutes where verified=True GROUP BY activity order by sum desc');
     activity_results_arr = [];
     activity_results_arr.push(activity_res.field_names)
     $.each(activity_res.tuples, function(tuple_idx, tuple) {
@@ -311,8 +311,8 @@ function makeActivitiesTable(con) {
 }
 
 function makeRecentActivitiesTable(con) {
-
-    recent_res = client.execute_sql(con, 'select to_char(enddate, \'Mon d\') as date, activity, intensity, duration from getfit.minutes order by enddate desc limit 5;');
+    recent_activities_query = 'select to_char(enddate, \'Mon dd\') as date, activity, intensity, duration from getfit.minutes order by enddate desc limit 5;'
+    recent_res = client.execute_sql(con, recent_activities_query);
     recent_results_arr = [];
     recent_results_arr.push(recent_res.field_names);
     $.each(recent_res.tuples, function(tuple_idx, tuple) {
