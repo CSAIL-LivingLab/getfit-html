@@ -66,31 +66,36 @@
 <body bgcolor="000000">
     <div style="height:5px">
     </div>
-    <div>
-        <h2>Total Minutes by Week</h2>
-        <div class="graphc-div" id="column-chart-div">
-            <div class="placeholder" id="column-chart-placeholder"></div>
-        </div>
-    </div>
-    <div>
-        <h2>Activity Breakdown</h2>
-        <div class="graphc-div" id="pie-chart-div">
-            <div class="placeholder" id="pie-chart-placeholder"></div>
-        </div>
-    </div>
-    <div>
+    <div id="main-div">
         <div>
-            <h2>Recent Activities</h2>
-            <div class="graphc-div" id="recent-activities-div">
-                <div class="placeholder" id="recent-activities-placeholder"></div>
+            <h2>Total Minutes by Week</h2>
+            <div class="graphc-div" id="column-chart-div">
+                <div class="placeholder" id="column-chart-placeholder"></div>
             </div>
         </div>
-        <h2>Most Popular Activities</h2>
-        <div class="graphc-div" id="table-div">
-            <div class="placeholder" id="popular-activities-placeholder"></div>
+        <div>
+            <h2>Activity Breakdown</h2>
+            <div class="graphc-div" id="pie-chart-div">
+                <div class="placeholder" id="pie-chart-placeholder"></div>
+            </div>
+        </div>
+        <div>
+            <div>
+                <h2>Recent Activities</h2>
+                <div class="graphc-div" id="recent-activities-div">
+                    <div class="placeholder" id="recent-activities-placeholder"></div>
+                </div>
+            </div>
+            <h2>Most Popular Activities</h2>
+            <div class="graphc-div" id="table-div">
+                <div class="placeholder" id="popular-activities-placeholder"></div>
+            </div>
+        </div>
+        <div style="height:100px">
         </div>
     </div>
-    <div style="height:100px">
+    <div id="no-data-div" style="display:none; padding-top:300px;">
+        <h2>This screen will display your activities once you have used the app to add minutes.</h2>
     </div>
 
 </body>
@@ -133,7 +138,9 @@ function makeCharts() {
     makePieChart(con);
     makeActivitiesTable(con);
 
+    // recent activities clears or populates the screen, to avoid async issues.
     makeRecentActivitiesTable(con);
+
 
     return;
 }
@@ -233,13 +240,13 @@ function makeActivityColumChart(con) {
     }
 
 
-    // draw the column chart
+    // draw the column chart. Return if no data
     if (week_results_arr.length == 2 && week_results_arr[1][1] == 0) {
-        document.getElementById('column-chart-placeholder').innerHTML = "No minutes logged"
-    } else {
-        week_data = google.visualization.arrayToDataTable(week_results_arr);
-        column_chart.draw(week_data, column_chart_options);
+        return;
     }
+
+    week_data = google.visualization.arrayToDataTable(week_results_arr);
+    column_chart.draw(week_data, column_chart_options);
 
     return;
 }
@@ -270,13 +277,13 @@ function makePieChart(con) {
     }
 
     activity_data = google.visualization.arrayToDataTable(activity_results_arr);
-    if (activity_results_arr.length > 1) {
-        var pie_chart = new google.visualization.PieChart(document.getElementById('pie-chart-div'));
-        pie_chart.draw(activity_data, options);
-    } else {
-        document.getElementById('pie-chart-placeholder').innerHTML = "No activities logged"
-    };
 
+    if (activity_results_arr.length <= 1) {
+        return;
+    }
+
+    var pie_chart = new google.visualization.PieChart(document.getElementById('pie-chart-div'));
+    pie_chart.draw(activity_data, options);
 
     return;
 }
@@ -300,12 +307,11 @@ function makeActivitiesTable(con) {
 
 
 
-    if (activity_results_arr.length > 1) {
-        table.draw(activity_data, options);
-    } else {
-        document.getElementById('popular-activities-placeholder').innerHTML = "No activities logged"
-    };
+    if (activity_results_arr.length <= 1) {
+        return;
+    }
 
+    table.draw(activity_data, options);
 
     return;
 }
@@ -338,13 +344,23 @@ function makeRecentActivitiesTable(con) {
         'cssClassNames': cssClassNames
     };
 
-    if (recent_results_arr.length > 1) {
-        recent_activity_data = google.visualization.arrayToDataTable(recent_results_arr);
-        var recentResultsTable = new google.visualization.Table(document.getElementById('recent-activities-div'));
-        recentResultsTable.draw(recent_activity_data, options);
-    } else {
-        document.getElementById('recent-activities-placeholder').innerHTML = "No activities logged"
-    };
+    // clear or populate the screen
+    if (recent_results_arr.length <= 1) {
+        $("#main-div").children().hide();
+        $("#no-data-div").show();
+        return;
+    } 
+
+    // unhide the screen and populate the graph, otherwise
+    $("#main-div").children().show();
+    $("#no-data-div").hide();
+    
+
+
+
+    recent_activity_data = google.visualization.arrayToDataTable(recent_results_arr);
+    var recentResultsTable = new google.visualization.Table(document.getElementById('recent-activities-div'));
+    recentResultsTable.draw(recent_activity_data, options);
 
     return;
 }
