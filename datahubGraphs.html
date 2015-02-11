@@ -158,7 +158,7 @@ function makeCharts() {
 
 function makeActivityColumChart(con) {
     // minutes by week
-    var firstDateStr = '2015-01-11';
+    var firstDateStr = '2015-02-02';
     var weekQuery = "select week, minutes from (SELECT sum(duration) as minutes, TRUNC(DATE_PART('day', enddate - ' " + firstDateStr + "'::timestamp)/7) as week from getfit.minutes where verified group by week) as numberedWeeks;"
     week_res = client.execute_sql(con, weekQuery);
 
