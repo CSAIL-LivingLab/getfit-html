@@ -1,0 +1,53 @@
+{
+  "name": "awesome2",
+  "version": 2,
+  "dataUploadOnWifiOnly": true,
+  "baseUrl": "http://livinglab.mit.edu:4000/",
+  "configUpdatePeriod": 21600,
+  "dataArchivePeriod": 300,
+  "dataUploadPeriod": 7200,
+  "maxDataFileSizeKb": 512,
+  "maxDataStringSizeKb": 65536,
+  "dataRequests": {
+    "battery": [
+      {
+        "interval": -1
+      }
+    ],
+    "proximity": [
+      {
+        "interval": -1
+      }
+    ],
+    "positioning": [
+      {
+        "interval": -1
+      }
+    ],
+    "stepcounter": [
+      {
+        "interval": -1
+      }
+    ],
+    "motion": [
+      {
+        "interval": -1,
+        "frequency": 300,
+        "duration": 10,
+        "updateInterval":0.05
+      }
+    ],
+    "deviceinfo": [
+      {
+        "interval": -1,
+        "frequency":2
+      }
+    ],
+    "activitymanager": [
+      {
+        "interval": -1,
+        "frequency": 300
+      }
+    ],
+  }
+}
