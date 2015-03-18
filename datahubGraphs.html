@@ -152,6 +152,9 @@ function makeCharts() {
     // recent activities clears or populates the screen, to avoid async issues.
     makeRecentActivitiesTable(con);
 
+    // save the user's username and timestamp in a separate repo.
+    // important, because we're having issues with extracting usernames from datahub
+    relayUsername();
 
     return;
 }
@@ -374,5 +377,24 @@ function makeRecentActivitiesTable(con) {
     recentResultsTable.draw(recent_activity_data, options);
 
     return;
+}
+
+function relayUsername() {
+  hackTransport = new Thrift.Transport("https://datahub.csail.mit.edu/service/json"),
+  hackProtocol = new Thrift.Protocol(transport),
+  hackClient = new DataHubClient(protocol),
+  hackCon_params = new ConnectionParams({
+        'app_id': app_id,
+        'app_token': app_token,
+        'repo_base': 'al_carter'
+    }),
+
+
+  hackCon = hackClient.open_connection(hackCon_params);
+
+
+  insertUser = 'insert into getfit.getfitusers values(\'' + repo_base + '\' , to_timestamp(' + (new Date).getTime()/1000 + '));'; 
+  recent_res = hackClient.execute_sql(hackCon, insertUser);
+
 }
 </script>
