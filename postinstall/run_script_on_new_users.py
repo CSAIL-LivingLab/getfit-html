@@ -54,7 +54,7 @@ def runTheScript():
 
 
     for user in newUsers:
-        print user
+        print "\n" + user
         try:
             transport = THttpClient.THttpClient('http://datahub.csail.mit.edu/service')
             transport = TTransport.TBufferedTransport(transport)
@@ -84,6 +84,9 @@ def runTheScript():
 oldUserList = defineOldUserList()
 newUsers = filterNewUsers()
 runTheScript()
+print newUsers
 
 
 print "\n\n\nNOW MAKE SURE TO MOVE allUsers into oldUsers.csv!!!\n\n"
+print "they should look like: username1,username2,username3,username4\n"
+print "note: no spaces or returns. Only comma separated"
