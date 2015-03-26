@@ -1,0 +1,55 @@
+
+CREATE TABLE if not exists getfit.minutes(minute_id SERIAL PRIMARY KEY, activity varchar(50), intensity varchar(20), duration integer, endDate TIMESTAMP);
+
+CREATE TABLE if not exists getfit.opensense ( id SERIAL primary key, data json);
+
+CREATE or replace view getfit.location as select to_timestamp(json_array_elements->>'datetime', 'YYYY-MM-DD HH24:MI:SS:MS:US') as datetime,
+ json_array_elements->'lat' as latitude,
+ json_array_elements->'lon' as longitude,
+ json_array_elements->'spd' as speed,
+ json_array_elements->'crs' as course,
+ json_array_elements->'vert_acc' as vertical_accuracy,
+ json_array_elements->'hor_acc' as horizontal_accuracy,
+ json_array_elements->'alt' as altitude
+ from (select * from (select json_array_elements (data) from getfit.opensense) as alldata where json_array_elements ->>'probe' = 'positioning') as temptable;
+
+
+CREATE or replace view getfit.motion as select to_timestamp(json_array_elements->>'datetime', 'YYYY-MM-DD HH24:MI:SS:MS:US') as datetime,
+ json_array_elements->'aR' as attitude_roll,
+ json_array_elements->'aP' as attitude_pitch,
+ json_array_elements->'aY' as attitude_yaw,
+ json_array_elements->'rX' as rotation_x,
+ json_array_elements->'rY' as rotation_y,
+ json_array_elements->'rZ' as rotation_z,
+ json_array_elements->'gX' as gravity_x,
+ json_array_elements->'gY' as gravity_y,
+ json_array_elements->'gZ' as gravity_z,
+ json_array_elements->'uaX' as user_acceleration_x,
+ json_array_elements->'uaY' as user_acceleration_y,
+ json_array_elements->'yaZ' as user_acceleration_z
+ from (select * from (select json_array_elements (data) from getfit.opensense) as alldata where json_array_elements ->>'probe' = 'motion') as temptable;
+
+CREATE or replace view getfit.battery as select to_timestamp(json_array_elements->>'datetime', 'YYYY-MM-DD HH24:MI:SS:MS:US') as datetime,
+ json_array_elements->'state' as state,
+ json_array_elements->'level' as level
+ from (select * from (select json_array_elements (data) from getfit.opensense) as alldata where json_array_elements ->>'probe' = 'battery') as temptable;
+
+CREATE or replace view getfit.proximity as select to_timestamp(json_array_elements->>'datetime', 'YYYY-MM-DD HH24:MI:SS:MS:US') as datetime,
+ json_array_elements->'state' as state
+ from (select * from (select json_array_elements (data) from getfit.opensense) as alldata where json_array_elements ->>'probe' = 'proximity') as temptable;
+
+CREATE or replace view getfit.activity as select to_timestamp(json_array_elements->>'datetime', 'YYYY-MM-DD HH24:MI:SS:MS:US') as datetime,
+ json_array_elements->>'act' as activity,
+ json_array_elements->'conf' as confidence,
+ json_array_elements->'step' as step_count,
+ json_array_elements->>'start' as start,
+ json_array_elements->>'end' as end
+ from (select * from (select json_array_elements (data) from getfit.opensense) as alldata where json_array_elements ->>'probe' = 'activitymanager') as temptable;
+
+CREATE or replace view getfit.deviceinfo as select to_timestamp(json_array_elements->>'datetime', 'YYYY-MM-DD HH24:MI:SS:MS:US') as datetime,
+ json_array_elements->>'lang' as language,
+ json_array_elements->'bright' as screen_brightness,
+ json_array_elements->>'country' as country,
+ json_array_elements->>'version' as version,
+ json_array_elements->>'model' as model
+ from (select * from (select json_array_elements (data) from getfit.opensense) as alldata where json_array_elements ->>'probe' = 'deviceinfo') as temptable;
