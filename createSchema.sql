@@ -1,5 +1,5 @@
 
-CREATE TABLE if not exists getfit.minutes(minute_id SERIAL PRIMARY KEY, activity varchar(50), intensity varchar(20), duration integer, endDate TIMESTAMP);
+CREATE TABLE if not exists getfit.minutes( minute_id SERIAL primary key, activity varchar(50), intensity varchar(20), duration integer, endDate timestamp, verified boolean default true)
 
 CREATE TABLE if not exists getfit.opensense ( id SERIAL primary key, data json);
 
