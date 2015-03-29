@@ -38,13 +38,13 @@ CREATE or replace view getfit.proximity as select to_timestamp(json_array_elemen
  json_array_elements->'state' as state
  from (select * from (select json_array_elements (data) from getfit.opensense) as alldata where json_array_elements ->>'probe' = 'proximity') as temptable;
 
-CREATE or replace view getfit.activity as select to_timestamp(json_array_elements->>'datetime', 'YYYY-MM-DD HH24:MI:SS:MS:US') as datetime,
- json_array_elements->>'act' as activity,
- json_array_elements->'conf' as confidence,
- json_array_elements->'step' as step_count,
- json_array_elements->>'start' as start,
- json_array_elements->>'end' as end
- from (select * from (select json_array_elements (data) from getfit.opensense) as alldata where json_array_elements ->>'probe' = 'activitymanager') as temptable;
+-- CREATE or replace view getfit.activity as select to_timestamp(json_array_elements->>'datetime', 'YYYY-MM-DD HH24:MI:SS:MS:US') as datetime,
+--  json_array_elements->>'act' as activity,
+--  json_array_elements->'conf' as confidence,
+--  json_array_elements->'step' as step_count,
+--  json_array_elements->>'start' as start,
+--  json_array_elements->>'end' as end
+--  from (select * from (select json_array_elements (data) from getfit.opensense) as alldata where json_array_elements ->>'probe' = 'activitymanager') as temptable;
 
 CREATE or replace view getfit.deviceinfo as select to_timestamp(json_array_elements->>'datetime', 'YYYY-MM-DD HH24:MI:SS:MS:US') as datetime,
  json_array_elements->>'lang' as language,
