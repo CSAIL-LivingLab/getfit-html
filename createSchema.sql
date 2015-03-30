@@ -53,7 +53,7 @@ CREATE or replace view getfit.activities as select
 from (
         select json_array_elements(json_array_elements->'activityLog') as activities from (
         select json_array_elements (data) from getfit.opensense
-        ) as alldata where json_array_elements ->>'probe' = 'activitymanager') as foo
+        ) as alldata where json_array_elements ->>'probe' = 'activitymanager') as foo;
 
 CREATE or replace view getfit.steps as select 
     activities->>'step' as steps, 
