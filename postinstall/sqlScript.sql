@@ -43,16 +43,6 @@ create or replace view getfit.proximity as select to_timestamp(json_array_elemen
  json_array_elements->'state' as state
  from (select * from (select json_array_elements (data) from getfit.opensense) as alldata where json_array_elements ->>'probe' = 'proximity') as temptable;
 
--- create the activity view
-drop table if exists getfit.activity;
-
-create or replace view getfit.activity as select to_timestamp(json_array_elements->>'datetime', 'YYYY-MM-DD HH24:MI:SS:MS:US') as datetime,
- json_array_elements->>'act' as activity,
- json_array_elements->'conf' as confidence,
- json_array_elements->'step' as step_count,
- json_array_elements->>'start' as start,
- json_array_elements->>'end' as end
- from (select * from (select json_array_elements (data) from getfit.opensense) as alldata where json_array_elements ->>'probe' = 'activitymanager') as temptable;
 
 -- create the deviceinfo view
 drop table if exists getfit.deviceinfo;
@@ -64,6 +54,29 @@ create or replace view getfit.deviceinfo as select to_timestamp(json_array_eleme
  json_array_elements->>'version' as version,
  json_array_elements->>'model' as model
  from (select * from (select json_array_elements (data) from getfit.opensense) as alldata where json_array_elements ->>'probe' = 'deviceinfo') as temptable;
+
+-- create the activity view
+drop table if exists getfit.activity;
+
+CREATE or replace view getfit.activities as select 
+    activities->'act' as activity, 
+    activities->'conf' as confidence,
+    to_timestamp(activities->>'start', 'YYYY-MM-DD HH24:MI:SS:MS:US') as start,
+    to_timestamp(activities->>'end', 'YYYY-MM-DD HH24:MI:SS:MS:US') as end
+from (
+        select json_array_elements(json_array_elements->'activityLog') as activities from (
+        select json_array_elements (data) from getfit.opensense
+        ) as alldata where json_array_elements ->>'probe' = 'activitymanager') as foo;
+
+-- create the step view
+CREATE or replace view getfit.steps as select 
+    activities->>'step' as steps, 
+    to_timestamp(activities->>'start', 'YYYY-MM-DD HH24:MI:SS:MS:US') as start,
+    to_timestamp(activities->>'end', 'YYYY-MM-DD HH24:MI:SS:MS:US') as end
+from (
+        select json_array_elements(json_array_elements->'stepLog') as activities from (
+        select json_array_elements (data) from getfit.opensense
+        ) as alldata where json_array_elements ->>'probe' = 'activitymanager') as foo;
 
 -- drop the device table, now that constraints are removed
 drop table if exists getfit.device;

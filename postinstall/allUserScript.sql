@@ -1,0 +1,1 @@
+select datetime from getfit.deviceinfo order by datetime desc LIMIT 1;

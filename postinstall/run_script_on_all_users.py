@@ -16,44 +16,23 @@ import csv
     You will need to
 
     1) define the secret.py allUsers array
-    2) import this file
-    3) copy allUsers into oldUsers.csv
-    4) make sure that your script in sqlScript.sql is what you want
-    5) import this file:
-        >> from run_script_on_new_users import *
+    2) make sure that your script in allUserScript.sql is what you want
+    3) import this file:
+        >> from run_script_on_all_users import *
     
     This will run your sql script for all new users.
 
 '''
 # get the current directory
 CURRENT_DIRECTORY = os.getcwd()
-
-    
-def defineOldUserList():
-    ''' the user var looks like ['al_carter', ' foo']
-    '''
-    oldUserFile = open(CURRENT_DIRECTORY + "/oldUsers.csv", 'rb')
-    existingUserString = csv.reader(oldUserFile)
-    oldUserList = list(existingUserString)[0]
-    return oldUserList
-
-
-def filterNewUsers():
-    global oldUserList
-    newUsers = []
-    for user in secret.allUsers:
-        # yeah, it's naieve. Also, we're cycling through < 200 users.
-        if user not in oldUserList:
-            newUsers.append(user)
-    return newUsers
-
+resultArray = [];
 
 def runTheScript():
-    sqlFile = open(CURRENT_DIRECTORY + "/sqlScript.sql", 'rb')
+    sqlFile = open(CURRENT_DIRECTORY + "/allUserScript.sql", 'rb')
     sqlScript = sqlFile.read()
 
 
-    for user in newUsers:
+    for user in secret.allUsers:
         print "\n" + user
         try:
             transport = THttpClient.THttpClient('http://datahub.csail.mit.edu/service')
@@ -68,8 +47,7 @@ def runTheScript():
                 query=sqlScript,
                 query_params=None)
 
-            print res;
-
+            resultArray.append(res)
 
         except Exception, e:
             print "\n---EXCEPTION---"
@@ -81,12 +59,7 @@ def runTheScript():
 # you need to defin an array before running
 
 
-oldUserList = defineOldUserList()
-newUsers = filterNewUsers()
 runTheScript()
-print newUsers
 
 
-print "\n\n\nNOW MAKE SURE TO MOVE allUsers into oldUsers.csv!!!\n"
-print "they should look like: username1,username2,username3,username4\n"
-print "note: no spaces or returns. Only comma separated"
+print "Your variable, resultArray contains the results of your script, run over all users"
