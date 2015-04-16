@@ -400,32 +400,83 @@ def runQueryOnAllUsers(query):
 					query=query,
 					query_params=None)
 
+			# save a variable for python
 			resultArray.append(res)
+
+			# create a table in the operator's repo, so that they can query against it.
+			createAndPopulateTable(resultArray)
 
 		except Exception, e:
 			print "\n---EXCEPTION---"
 			print e
 
-	print resultArray
+	# print resultArray
 
-def createTableUsingResultArray(resultArray):
+def createAndPopulateTable(resultArray):
+	''' create a table to store the results
+	'''
+	
+	# create the ddl script
 	fieldNames = resultArray[0].field_names
 	fieldTypes = resultArray[0].field_types
 
-	ddl = "CREATE OR REPLACE TABLE getfit.results ("
-
+	ddl = "DROP TABLE IF EXISTS getfit.results; CREATE TABLE getfit.results (username text,"
 	for i in range(0, len(fieldNames)):
 		columnName = fieldNames[i]
 		columnType = typeDict.get(int(fieldTypes[i]))
 		ddl += columnName + " " + columnType + ", "
-
-	ddl = ddl[:-1]
+	ddl = ddl[:-2]
 	ddl+= ");"
+	# print ddl;
+
+	# create the dml script
+dml = "insert into getfit.results ("
+for field in fieldNames:
+	columnName = field
+	dml += columnName + ", "
+
+dml = dml[:-2]
+dml+= ") values"
+
+	# populate it
+dml = ""
+for i in range(0, len(resultArray)-1):
+	user = secret.subsetOfUsers[i]
+	userResults = resultArray[i].tuples
+	for tup in userResults:
+		result = tup.cells
+		dml += "("+user + ", ".join(result) +"), "
+
+		for column in result:
+
+				## convert result types
+
+
+
+	# try:
+	# 	transport = THttpClient.THttpClient('http://datahub.csail.mit.edu/service')
+	# 	transport = TTransport.TBufferedTransport(transport)
+	# 	protocol = TBinaryProtocol.TBinaryProtocol(transport)
+	# 	client = DataHub.Client(protocol)
+	# 	con_params = ConnectionParams(repo_base='al_carter', app_id=secret.DHAPPID, app_token=secret.DHAPPTOKEN)
+	# 	con = client.open_connection(con_params=con_params)
+
+	# 	res = client.execute_sql(
+	# 		con=con,
+	# 		query=ddl,
+	# 		query_params=None)
+
+	# 	resultArray.append(res)
+	# 	print resultArray
+
+	# except Exception, e:
+	# 	print "\n---EXCEPTION---"
+	# 	print e
 
 
 	# send this table to DataHub
 	# then fill it in with results.
-	print ddl;
+	
 
 
 
