@@ -375,6 +375,8 @@ typeDict = {16: "bool",
 
 resultArray = [];
 
+operator = raw_input("your datahub username> ")
+
 # prompt the user to enter a sql query
 # users can also view the resultArray for python results
 def runPrompt():
@@ -387,7 +389,7 @@ def runPrompt():
 			resultArray = []
 			resultArray = runQueryOnAllUsers(userQuery)
 			createAndPopulateTable(resultArray)
-			print "--complete. check getfit.results in your datahub--"
+			print "\n--- query complete. check getfit.results in your datahub ---"
 		
 		except Exception, e:
 			print 
@@ -398,7 +400,7 @@ def runPrompt():
 # query all users in the secret.allusers list
 def runQueryOnAllUsers(query):
 	results = []
-	for user in secret.subsetOfUsers:
+	for user in secret.allUsers:
 		try:
 			# pdb.set_trace()
 			transport = THttpClient.THttpClient('http://datahub.csail.mit.edu/service')
@@ -438,14 +440,14 @@ def createAndPopulateTable(resultArray):
 
 	#concatinate the dml and ddl
 	query = ddl + dml
-	print query
+	# print query
 
 	try:
 		transport = THttpClient.THttpClient('http://datahub.csail.mit.edu/service')
 		transport = TTransport.TBufferedTransport(transport)
 		protocol = TBinaryProtocol.TBinaryProtocol(transport)
 		client = DataHub.Client(protocol)
-		con_params = ConnectionParams(repo_base='al_carter', app_id=secret.DHAPPID, app_token=secret.DHAPPTOKEN)
+		con_params = ConnectionParams(repo_base=operator, app_id=secret.DHAPPID, app_token=secret.DHAPPTOKEN)
 		con = client.open_connection(con_params=con_params)
 
 		res = client.execute_sql(
@@ -464,7 +466,7 @@ def createAndPopulateTable(resultArray):
 def createDDL(resultArray):
 	fieldNames = resultArray[0].field_names
 	fieldTypes = resultArray[0].field_types
-	pdb.set_trace()
+	# pdb.set_trace()
 
 	ddl = "DROP TABLE IF EXISTS getfit.results; CREATE TABLE getfit.results (username text,"
 	for i in range(0, len(fieldNames)):
@@ -493,9 +495,9 @@ def createDML(resultArray):
 	parsedColumns = []
 	for i in range(0, len(resultArray)):
 		# pdb.set_trace()
-		print i
-		print secret.subsetOfUsers[i]
-		user = secret.subsetOfUsers[i]
+		# print i
+		print secret.allUsers[i]
+		user = secret.allUsers[i]
 		userResults = resultArray[i].tuples
 		for tup in userResults:
 			result = tup.cells
