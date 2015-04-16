@@ -372,7 +372,6 @@ def runPrompt():
 
 
 def runTheScript(queryType, query):
-	print "%r, %r" % (queryType, query)
 	if queryType == "1":
 		runQueryOnAllUsers(query)
 	elif queryType == "2":
@@ -404,10 +403,10 @@ def runQueryOnAllUsers(query):
 			resultArray.append(res)
 
 			# create a table in the operator's repo, so that they can query against it.
-			createAndPopulateTable(resultArray)
+			# createAndPopulateTable(resultArray)
 
 		except Exception, e:
-			print "\n---EXCEPTION---"
+			print "\n---EXCEPTION in runQueryOnAllUsers---"
 			print e
 
 	# print resultArray
@@ -425,58 +424,61 @@ def createAndPopulateTable(resultArray):
 		columnName = fieldNames[i]
 		columnType = typeDict.get(int(fieldTypes[i]))
 		ddl += columnName + " " + columnType + ", "
+
 	ddl = ddl[:-2]
 	ddl+= ");"
-	# print ddl;
 
-	# create the dml script
-dml = "insert into getfit.results ("
-for field in fieldNames:
-	columnName = field
-	dml += columnName + ", "
+	# create the column names for the dml script
+	dml = "INSERT INTO getfit.results (username, "
+	for field in fieldNames:
+		columnName = field
+		dml += columnName + ", "
 
-dml = dml[:-2]
-dml+= ") values"
+	dml = dml[:-2]
+	dml+= ") values"
 
-	# populate it
-parsedColumns = []
-dml = ""
-for i in range(0, len(resultArray)-1):
-	user = secret.subsetOfUsers[i]
-	userResults = resultArray[i].tuples
-	for tup in userResults:
-		result = tup.cells
-		parsedColumns = []
-		for column in result:
-			parsedColumns.append(stringOrNumber(column))
-		# dml += "("+user + ", ".join(parsedColumns) +"), "
+	# populate the values of the dml
+	parsedColumns = []
+	for i in range(0, len(resultArray)):
+		user = secret.subsetOfUsers[i]
+		userResults = resultArray[i].tuples
+		for tup in userResults:
+			result = tup.cells
+			parsedColumns = []
+			for column in result:
+				parsedColumns.append(stringOrNumber(column))
+			dml += "('"+user + "', "
+			for column in parsedColumns:
+				if isinstance(column, basestring):
+					dml += "'" + column + "', "
+				else:
+					dml += str(column) + ", "		
+			dml = dml[:-2] + "), "
 
+	dml = dml[:-2]
 
+	#concatinate the dml and ddl
+	query = ddl + dml
 
+	try:
+		transport = THttpClient.THttpClient('http://datahub.csail.mit.edu/service')
+		transport = TTransport.TBufferedTransport(transport)
+		protocol = TBinaryProtocol.TBinaryProtocol(transport)
+		client = DataHub.Client(protocol)
+		con_params = ConnectionParams(repo_base='al_carter', app_id=secret.DHAPPID, app_token=secret.DHAPPTOKEN)
+		con = client.open_connection(con_params=con_params)
 
-				# convert result types
+		res = client.execute_sql(
+			con=con,
+			query=query,
+			query_params=None)
 
+		resultArray.append(res)
+		# print resultArray
 
-
-	# try:
-	# 	transport = THttpClient.THttpClient('http://datahub.csail.mit.edu/service')
-	# 	transport = TTransport.TBufferedTransport(transport)
-	# 	protocol = TBinaryProtocol.TBinaryProtocol(transport)
-	# 	client = DataHub.Client(protocol)
-	# 	con_params = ConnectionParams(repo_base='al_carter', app_id=secret.DHAPPID, app_token=secret.DHAPPTOKEN)
-	# 	con = client.open_connection(con_params=con_params)
-
-	# 	res = client.execute_sql(
-	# 		con=con,
-	# 		query=ddl,
-	# 		query_params=None)
-
-	# 	resultArray.append(res)
-	# 	print resultArray
-
-	# except Exception, e:
-	# 	print "\n---EXCEPTION---"
-	# 	print e
+	except Exception, e:
+		print "\n---EXCEPTION in createAndPopulateTable ---"
+		print e
 
 
 	# send this table to DataHub
@@ -488,6 +490,9 @@ def stringOrNumber(object):
 		return True
 	if object == "False":
 		return False
+	if object == "":
+		return "null"
+
 	try:
 		int(object)
 		return int(object)
@@ -519,7 +524,7 @@ def runQueryOnOwnRepo(query, user):
 		print resultArray
 
 	except Exception, e:
-		print "\n---EXCEPTION---"
+		print "\n---EXCEPTION in runQueryOnOwnRepo---"
 		print e
 
 runPrompt()
