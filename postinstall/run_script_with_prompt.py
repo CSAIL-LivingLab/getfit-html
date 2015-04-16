@@ -439,17 +439,22 @@ dml = dml[:-2]
 dml+= ") values"
 
 	# populate it
+parsedColumns = []
 dml = ""
 for i in range(0, len(resultArray)-1):
 	user = secret.subsetOfUsers[i]
 	userResults = resultArray[i].tuples
 	for tup in userResults:
 		result = tup.cells
-		dml += "("+user + ", ".join(result) +"), "
-
+		parsedColumns = []
 		for column in result:
+			parsedColumns.append(stringOrNumber(column))
+		# dml += "("+user + ", ".join(parsedColumns) +"), "
 
-				## convert result types
+
+
+
+				# convert result types
 
 
 
@@ -477,8 +482,23 @@ for i in range(0, len(resultArray)-1):
 	# send this table to DataHub
 	# then fill it in with results.
 	
-
-
+# return bool values
+def stringOrNumber(object):
+	if object == "True":
+		return True
+	if object == "False":
+		return False
+	try:
+		int(object)
+		return int(object)
+	except:
+		pass
+	try:
+		float(object)
+		return float(object)
+	except:
+		pass
+	return object
 
 
 def runQueryOnOwnRepo(query, user):
