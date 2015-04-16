@@ -15,6 +15,11 @@ import csv
 		This is a convenience program allowing app owners to query accross multiple
 		user repos that run their apps.
 
+		This program assumes that the DHAPPID and DHAPPTOKEN specified in secret.py
+		have been authorized to operate on the "getfit" repo in your DataHub account.
+
+		Be forwarned, the getfit.results table will be dropped and overwritten.
+
 		to run:
 
 			$ python 
