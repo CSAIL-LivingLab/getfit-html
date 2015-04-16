@@ -26,7 +26,7 @@ import csv
 			>>> from run_script_with_prompt import *
 '''
 
-resultArray = [];
+
 typeDict = {16: "bool",
 17: "bytea",
 18: "char",
@@ -46,7 +46,9 @@ typeDict = {16: "bool",
 75: "pg_attribute",
 81: "pg_proc",
 83: "pg_class",
-114: "json",
+# 114: "json",
+# override because issues
+114: "float4",
 142: "xml",
 143: "_xml",
 199: "_json",
@@ -371,17 +373,19 @@ typeDict = {16: "bool",
 176360: "uptodateoccupancy",
 176359: "_uptodateoccupancy"}
 
+resultArray = [];
+
 # prompt the user to enter a sql query
 # users can also view the resultArray for python results
 def runPrompt():
-	query = raw_input("---your query or 'quit()'---\n> ")
-	if query == "quit()":
+	userQuery = raw_input("---your query or 'quit()'---\n> ")
+	if userQuery == "quit()":
 		print "--- to return to SQL, type 'runPrompt()' ---"
 		print "---        now exising to python         ---"
 	else:
 		try:
 			resultArray = []
-			resultArray = runQueryOnAllUsers(query)
+			resultArray = runQueryOnAllUsers(userQuery)
 			createAndPopulateTable(resultArray)
 			print "--complete. check getfit.results in your datahub--"
 		
@@ -434,7 +438,7 @@ def createAndPopulateTable(resultArray):
 
 	#concatinate the dml and ddl
 	query = ddl + dml
-	# print query
+	print query
 
 	try:
 		transport = THttpClient.THttpClient('http://datahub.csail.mit.edu/service')
@@ -460,6 +464,7 @@ def createAndPopulateTable(resultArray):
 def createDDL(resultArray):
 	fieldNames = resultArray[0].field_names
 	fieldTypes = resultArray[0].field_types
+	pdb.set_trace()
 
 	ddl = "DROP TABLE IF EXISTS getfit.results; CREATE TABLE getfit.results (username text,"
 	for i in range(0, len(fieldNames)):
