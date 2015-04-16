@@ -6,6 +6,7 @@ from thrift.protocol import TBinaryProtocol
 from thrift.transport import THttpClient
 from thrift.transport import TTransport
 import secret
+import pdb
 
 import os
 import csv
@@ -365,28 +366,32 @@ typeDict = {16: "bool",
 176360: "uptodateoccupancy",
 176359: "_uptodateoccupancy"}
 
+# prompt the user to enter a sql query
+# users can also view the resultArray for python results
 def runPrompt():
-	queryType = raw_input("1: create a new table\n2: use your own user repo\n3: exit to python\n> ")
-	query = raw_input("> ")
-	runTheScript(queryType, query)
+	query = raw_input("---your query or 'quit()'---\n> ")
+	if query == "quit()":
+		print "--- to return to SQL, type 'runPrompt()' ---"
+		print "---        now exising to python         ---"
+	else:
+		try:
+			resultArray = []
+			resultArray = runQueryOnAllUsers(query)
+			createAndPopulateTable(resultArray)
+			print "--complete. check getfit.results in your datahub--"
+		
+		except Exception, e:
+			print 
 
+		# pdb.set_trace()
+		runPrompt()
 
-def runTheScript(queryType, query):
-	if queryType == "1":
-		runQueryOnAllUsers(query)
-	elif queryType == "2":
-		runQueryOnOwnRepo(query,'al_carter')
-	elif queryType == "3":
-		print "to reeturn to SQL, type 'runPrompt()'"
-		print "--- now exising to sql ---"
-		return
-
-	resultArray = [];
-	runPrompt();
-
+# query all users in the secret.allusers list
 def runQueryOnAllUsers(query):
+	results = []
 	for user in secret.subsetOfUsers:
 		try:
+			# pdb.set_trace()
 			transport = THttpClient.THttpClient('http://datahub.csail.mit.edu/service')
 			transport = TTransport.TBufferedTransport(transport)
 			protocol = TBinaryProtocol.TBinaryProtocol(transport)
@@ -400,7 +405,7 @@ def runQueryOnAllUsers(query):
 					query_params=None)
 
 			# save a variable for python
-			resultArray.append(res)
+			results.append(res)
 
 			# create a table in the operator's repo, so that they can query against it.
 			# createAndPopulateTable(resultArray)
@@ -409,56 +414,22 @@ def runQueryOnAllUsers(query):
 			print "\n---EXCEPTION in runQueryOnAllUsers---"
 			print e
 
+	return results
+
 	# print resultArray
 
+# run sql creating and populating the getfit.results table
 def createAndPopulateTable(resultArray):
 	''' create a table to store the results
 	'''
 	
 	# create the ddl script
-	fieldNames = resultArray[0].field_names
-	fieldTypes = resultArray[0].field_types
-
-	ddl = "DROP TABLE IF EXISTS getfit.results; CREATE TABLE getfit.results (username text,"
-	for i in range(0, len(fieldNames)):
-		columnName = fieldNames[i]
-		columnType = typeDict.get(int(fieldTypes[i]))
-		ddl += columnName + " " + columnType + ", "
-
-	ddl = ddl[:-2]
-	ddl+= ");"
-
-	# create the column names for the dml script
-	dml = "INSERT INTO getfit.results (username, "
-	for field in fieldNames:
-		columnName = field
-		dml += columnName + ", "
-
-	dml = dml[:-2]
-	dml+= ") values"
-
-	# populate the values of the dml
-	parsedColumns = []
-	for i in range(0, len(resultArray)):
-		user = secret.subsetOfUsers[i]
-		userResults = resultArray[i].tuples
-		for tup in userResults:
-			result = tup.cells
-			parsedColumns = []
-			for column in result:
-				parsedColumns.append(stringOrNumber(column))
-			dml += "('"+user + "', "
-			for column in parsedColumns:
-				if isinstance(column, basestring):
-					dml += "'" + column + "', "
-				else:
-					dml += str(column) + ", "		
-			dml = dml[:-2] + "), "
-
-	dml = dml[:-2]
+	ddl = createDDL(resultArray)
+	dml = createDML(resultArray)
 
 	#concatinate the dml and ddl
 	query = ddl + dml
+	# print query
 
 	try:
 		transport = THttpClient.THttpClient('http://datahub.csail.mit.edu/service')
@@ -480,11 +451,60 @@ def createAndPopulateTable(resultArray):
 		print "\n---EXCEPTION in createAndPopulateTable ---"
 		print e
 
+# generate sql for creating the getfit.results table
+def createDDL(resultArray):
+	fieldNames = resultArray[0].field_names
+	fieldTypes = resultArray[0].field_types
 
-	# send this table to DataHub
-	# then fill it in with results.
+	ddl = "DROP TABLE IF EXISTS getfit.results; CREATE TABLE getfit.results (username text,"
+	for i in range(0, len(fieldNames)):
+		columnName = fieldNames[i]
+		columnType = typeDict.get(int(fieldTypes[i]))
+		ddl += columnName + " " + columnType + ", "
+
+	ddl = ddl[:-2]
+	ddl+= ");"
+	return ddl
+
+# generate sql for populating the getfit.results table
+def createDML(resultArray):
+	fieldNames = resultArray[0].field_names
+	fieldTypes = resultArray[0].field_types
+		# create the column names for the dml script
+	dml = "INSERT INTO getfit.results (username, "
+	for field in fieldNames:
+		columnName = field
+		dml += columnName + ", "
+
+	dml = dml[:-2]
+	dml+= ") values"
+
+	# populate the values of the dml
+	parsedColumns = []
+	for i in range(0, len(resultArray)):
+		# pdb.set_trace()
+		print i
+		print secret.subsetOfUsers[i]
+		user = secret.subsetOfUsers[i]
+		userResults = resultArray[i].tuples
+		for tup in userResults:
+			result = tup.cells
+			parsedColumns = []
+			for column in result:
+				parsedColumns.append(stringOrNumber(column))
+			dml += "('"+user + "', "
+			for column in parsedColumns:
+				if isinstance(column, basestring):
+					dml += "'" + column + "', "
+				else:
+					dml += str(column) + ", "		
+			dml = dml[:-2] + "), "
+
+	dml = dml[:-2]
+
+	return dml
 	
-# return bool values
+# return bool, null, or strings for sql
 def stringOrNumber(object):
 	if object == "True":
 		return True
@@ -504,27 +524,5 @@ def stringOrNumber(object):
 	except:
 		pass
 	return object
-
-
-def runQueryOnOwnRepo(query, user):
-	try:
-		transport = THttpClient.THttpClient('http://datahub.csail.mit.edu/service')
-		transport = TTransport.TBufferedTransport(transport)
-		protocol = TBinaryProtocol.TBinaryProtocol(transport)
-		client = DataHub.Client(protocol)
-		con_params = ConnectionParams(repo_base=user, app_id=secret.DHAPPID, app_token=secret.DHAPPTOKEN)
-		con = client.open_connection(con_params=con_params)
-
-		res = client.execute_sql(
-			con=con,
-			query=query,
-			query_params=None)
-
-		resultArray.append(res)
-		print resultArray
-
-	except Exception, e:
-		print "\n---EXCEPTION in runQueryOnOwnRepo---"
-		print e
 
 runPrompt()
